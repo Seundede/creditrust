@@ -7,7 +7,7 @@ import Button from "@/components/Button";
 import Toast from "react-native-toast-message";
 
 const Page = () => {
-  const [assets, error = true] = useAssets([
+  const [assets, error] = useAssets([
     require("@/assets/videos/onboarding-video.mp4"),
   ]);
   if (error) {
@@ -30,11 +30,11 @@ const Page = () => {
         />
       )}
       <View style={tw`mt-40 px-5`}>
-        <Text style={tw`text-2xl font-extrabold uppercase`}>
+        <Text style={tw`text-2xl font-bold uppercase`}>
           Ready to revolutionize your finances?
         </Text>
       </View>
-      <View style={tw`flex flex-row justify-between  mb-20 px-5`}>
+      <View style={tw`flex flex-row justify-between p-5`}>
         <View style={tw`w-[46%]`}>
           <Button href="/signup" text="Sign Up" />
         </View>

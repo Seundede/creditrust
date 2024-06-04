@@ -13,7 +13,7 @@ import PhoneInput from "@/components/PhoneInput";
 import Colors from "@/constants/Colors";
 
 
-type PhoneValues = {
+export type PhoneValues = {
   phone: [string, CountryCode];
 };
 
@@ -62,7 +62,8 @@ const Signup: React.FC = () => {
         <Link href="/login" replace asChild>
           <TouchableOpacity>
             <Text style={[tw`text-base mt-5`, { color: Colors.primary }]}>
-              Already have an account? Log in
+              Already have an account?
+              <Text style={tw`underline`}> Log in</Text>
             </Text>
           </TouchableOpacity>
         </Link>
@@ -71,11 +72,8 @@ const Signup: React.FC = () => {
             style={[
               tw`w-full h-12 rounded-2xl flex items-center justify-center`,
               {
-                backgroundColor:
-                  formValues.phone[0] === ""
-                    ? Colors.primary50
-                    : Colors.primary,
-                opacity: formValues.phone[0] === "" ? 0.75 : 1,
+                backgroundColor: Colors.primary,
+                opacity: formValues.phone[0] === "" ? 0.5 : 1,
               },
             ]}
             disabled={formValues.phone[0] === ""}

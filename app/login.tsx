@@ -14,9 +14,11 @@ enum SignInType {
   Apple,
 }
 
+type IconNames = "mail-outline" | "logo-google" | "logo-apple";
+
 type SignInProps = {
   title: string;
-  icon: string;
+  icon: IconNames;
   type: SignInType;
 };
 const signInMethod: SignInProps[] = [
@@ -99,6 +101,7 @@ const Login = () => {
             key={index}
             style={[
               tw`w-full h-12 border rounded-2xl gap-2  mb-4 flex flex-row items-center justify-center`,
+              
             ]}
             onPress={() => handleSignIn(item.type)}
           >

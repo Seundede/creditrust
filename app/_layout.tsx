@@ -1,4 +1,4 @@
-import { ClerkProvider } from '@clerk/clerk-expo';
+import { ClerkProvider, useAuth } from '@clerk/clerk-expo';
 import { Ionicons } from '@expo/vector-icons';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useFonts } from 'expo-font';
@@ -26,7 +26,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
     ...FontAwesome.font,
   });
 
@@ -44,36 +44,45 @@ export default function RootLayout() {
   if (!loaded) {
     return null;
   }
-
-  return <RootLayoutNav />;
-}
-
-function RootLayoutNav() {
-const router = useRouter()
-//Function to encrypt and securely store key-value pairs locally on the device.
-const tokenCache = {
-  async getToken(key: string) {
-    try {
-      return SecureStore.getItemAsync(key);
-    } catch (err) {
-      return null;
-    }
-  },
-  async saveToken(key: string, value: string) {
-    try {
-      return SecureStore.setItemAsync(key, value);
-    } catch (err) {
-      return;
-    }
-  },
-};
-
+  //Function to encrypt and securely store key-value pairs locally on the device.
+  const tokenCache = {
+    async getToken(key: string) {
+      try {
+        return SecureStore.getItemAsync(key);
+      } catch (err) {
+        return null;
+      }
+    },
+    async saveToken(key: string, value: string) {
+      try {
+        return SecureStore.setItemAsync(key, value);
+      } catch (err) {
+        return;
+      }
+    },
+  };
   return (
     <ClerkProvider
       publishableKey={process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!}
       tokenCache={tokenCache}
     >
       <GestureHandlerRootView style={{ flex: 1 }}>
+        <RootLayoutNav />
+      </GestureHandlerRootView>
+    </ClerkProvider>
+  );
+}
+
+function RootLayoutNav() {
+const router = useRouter()
+const { isLoaded, isSignedIn} = useAuth()
+  useEffect(() => {
+   console.log(isSignedIn, "isSignedIn")
+  }, [isSignedIn]);
+
+
+  return (
+   
         <Stack>
           <Stack.Screen name="index" options={{ headerShown: false }} />
           <Stack.Screen
@@ -130,7 +139,6 @@ const tokenCache = {
             }}
           />
         </Stack>
-      </GestureHandlerRootView>
-    </ClerkProvider>
+    
   );
 }

@@ -1,60 +1,56 @@
-import { View, Text, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native'
-import React, { useState } from 'react'
+import {
+  View,
+  Text,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableOpacity,
+} from "react-native";
+import React, { useState } from "react";
 import tw from "twrnc";
-import Colors from '@/constants/Colors';
-import PhoneInput from '@/components/PhoneInput';
-import { CountryCode } from 'libphonenumber-js';
-import { PhoneValues } from './signup';
-import { Ionicons } from '@expo/vector-icons';
+import Colors from "@/constants/Colors";
+import { useRouter } from "expo-router";
+import { isClerkAPIResponseError, useSignIn } from "@clerk/clerk-expo";
+import Toast from "react-native-toast-message";
+import Or from "@/components/Or";
+import SocialAuth from "@/components/SocialAuth";
+import { ClerkAPIError } from "@clerk/types";
+import CustomTextInput from "@/components/TextInput";
 
-enum SignInType {
-  Phone,
-  Email,
-  Google,
-  Apple,
-}
-
-type IconNames = "mail-outline" | "logo-google" | "logo-apple";
-
-type SignInProps = {
-  title: string;
-  icon: IconNames;
-  type: SignInType;
-};
-const signInMethod: SignInProps[] = [
-  {
-    title: "continue with email",
-    icon: "mail-outline",
-    type: SignInType.Email,
-  },
-  {
-    title: "continue with google",
-    icon: "logo-google",
-    type: SignInType.Google,
-  },
-  {
-    title: "continue with apple",
-    icon: "logo-apple",
-    type: SignInType.Apple,
-  },
-];
 const Login = () => {
- const [countryCode, setCountryCode] = useState<CountryCode>("NG");
- const [formValues, setFormValues] = useState<PhoneValues>({
-   phone: ["", "NG" as CountryCode],
- });
-  const handleChangeCountry = (country: { cca2: CountryCode }) => {
-    setCountryCode(country.cca2);
-  };
+  const { isLoaded, signIn, setActive } = useSignIn();
+  const [email, setEmail] = React.useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [errors, setErrors] = useState<ClerkAPIError[]>();
+  const router = useRouter();
+  const isDisabled: boolean = email === "" || password === ""
 
-  const handleChangePhone = (phone: string) => {
-    const updatedFormValues: PhoneValues = {
-      phone: [phone, countryCode],
-    };
-    setFormValues(updatedFormValues);
-  };
+  // Handle the submission of the sign-in input fields
+  const handleSignIn = async () => {
+    if (!isLoaded) {
+      return;
+    }
+    // Start the sign-in process using the email and password provided
+    try {
+      const signInAttempt = await signIn.create({
+        identifier: email,
+        password,
+      });
 
-    const handleSignIn = async (type: SignInType) => {};
+      // If sign-in process is complete, set the created session as active
+      // and redirect the user
+      if (signInAttempt.status === "complete") {
+        await setActive({ session: signInAttempt.createdSessionId });
+        router.push("/");
+      }
+    } catch (err: any) {
+      if (isClerkAPIResponseError(err)) setErrors(err.errors);
+      console.error(JSON.stringify(err, null, 2));
+      Toast.show({
+        type: "error",
+        text1: "An error occured. Kindly try again",
+      });
+    }
+  };
   return (
     <KeyboardAvoidingView
       style={tw`flex-1`}
@@ -68,54 +64,39 @@ const Login = () => {
         <Text style={[tw`mt-5 mb-10 text-base`, { color: Colors.gray }]}>
           Enter the phone number associated with your account.
         </Text>
-
-        <PhoneInput
-          phone={formValues.phone[0]}
-          onChangePhone={handleChangePhone}
-          countryCode={countryCode}
-          onChangeCountry={handleChangeCountry}
+        <CustomTextInput
+          text={email}
+          onChangeText={setEmail}
+          label="Email"
+          placeholder="E-mail address"
         />
-
+        <CustomTextInput
+          text={password}
+          onChangeText={setPassword}
+          label="Password"
+          placeholder="Password"
+          isPassword
+        />
         <TouchableOpacity
           style={[
             tw`w-full h-12 rounded-2xl mt-10 flex items-center justify-center`,
             {
               backgroundColor: Colors.primary,
-              opacity: formValues.phone[0] === "" ? 0.5 : 1,
+              opacity: isDisabled ? 0.5 : 1,
             },
           ]}
-          disabled={formValues.phone[0] === ""}
-          onPress={() => handleSignIn(SignInType.Phone)}
+          disabled={isDisabled}
+          onPress={ handleSignIn}
         >
           <Text style={[tw`font-medium text-base`, { color: "white" }]}>
             Login
           </Text>
         </TouchableOpacity>
-        <View style={tw`flex flex-row items-center gap-2 my-5 `}>
-          <View style={tw`h-[1px] flex-1 bg-slate-300`} />
-          <Text>or</Text>
-          <View style={tw`h-[1px] flex-1 bg-slate-300`} />
-        </View>
-        {signInMethod.map((item, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[
-              tw`w-full h-12 border rounded-2xl gap-2  mb-4 flex flex-row items-center justify-center`,
-              
-            ]}
-            onPress={() => handleSignIn(item.type)}
-          >
-            <Ionicons name={item.icon} size={24} color={"#000"} />
-            <Text
-              style={[tw`font-medium text-base capitalize`, { color: "black" }]}
-            >
-              {item.title}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        <Or />
+        <SocialAuth />
       </View>
     </KeyboardAvoidingView>
   );
-}
+};
 
-export default Login
+export default Login;

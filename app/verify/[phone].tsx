@@ -1,7 +1,10 @@
 import { View, Text, TouchableOpacity } from "react-native";
-import React, { useEffect, useState } from "react";
-import { Link, useLocalSearchParams } from "expo-router";
-import { useSignIn, useSignUp } from "@clerk/clerk-expo";
+import React, { useState } from "react";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import {
+  isClerkAPIResponseError,
+  useSignUp,
+} from "@clerk/clerk-expo";
 import tw from "twrnc";
 import Colors from "@/constants/Colors";
 import {
@@ -10,61 +13,57 @@ import {
   useBlurOnFulfill,
   useClearByFocusCell,
 } from "react-native-confirmation-code-field";
+import { ClerkAPIError } from "@clerk/types";
+import Toast from "react-native-toast-message";
 
 const CELL_COUNT = 6;
 const Page = () => {
-  const { phone, signin } = useLocalSearchParams<{
-    phone: string;
-    signin: string;
+  const { email } = useLocalSearchParams<{
+    email: string;
   }>();
+  const router = useRouter();
+  const { isLoaded, signUp, setActive } = useSignUp();
   const [value, setValue] = useState("");
+  const [errors, setErrors] = React.useState<ClerkAPIError[]>();
   const ref = useBlurOnFulfill({ value, cellCount: CELL_COUNT });
   const [props, getCellOnLayoutHandler] = useClearByFocusCell({
     value,
     setValue,
   });
-    const { signIn,  } = useSignIn();
-    const {  signUp, setActive } = useSignUp();
-  useEffect(() => {
-    if (value.length === 6) {
-      if (signin === "true") {
-        verifySignIn();
-      } else {
-        verifyCode();
-      }
-    }
-  }, []);
 
-  const verifyCode = async () => {
+  // Function to verify OTP when a user signs up
+  const handleVerification = async () => {
+    if (!isLoaded) return;
     try {
-        await signUp!.attemptPhoneNumberVerification({
-            code:value
-        })
-        await setActive!({ session: signUp?.createdSessionId})
-    } catch (error) {
-        console.log(error)
-
-  };
-  }
-  const verifySignIn = async () => {
-    try {
-      await signIn!.attemptFirstFactor({
-        strategy: "phone_code",
+      // Use the code the user provided to attempt verification
+      const completeSignUp = await signUp.attemptEmailAddressVerification({
         code: value,
       });
-      await setActive!({ session: signIn?.createdSessionId });
-    } catch (error) {
-      console.log(error);
+
+      // If verification was completed, set the session to active
+      // and redirect the user
+      if (completeSignUp.status === "complete") {
+        await setActive({ session: completeSignUp.createdSessionId });
+        router.push("/");
+        console.log("signed up");
+      }
+    } catch (err: any) {
+      if (isClerkAPIResponseError(err)) setErrors(err.errors);
+      console.error(JSON.stringify(err, null, 2));
+      Toast.show({
+        type: "error",
+        text1: "An error occured. Kindly try again",
+      });
     }
   };
+const isDisabled: boolean = value.length < 6;
   return (
     <View style={tw`bg-white flex-1 p-5`}>
       <Text style={[tw`text-2xl font-medium`, { color: Colors.secondary }]}>
         Enter the 6-digit code
       </Text>
       <Text style={[tw`mt-5  text-base`, { color: Colors.gray }]}>
-        We've sent a verification code to your phone number {phone}. Kindly
-        check your device
+        We've sent a verification code to your email address: {email}.
       </Text>
       <Link href="/login" replace asChild>
         <TouchableOpacity>
@@ -95,9 +94,23 @@ const Page = () => {
           </Text>
         )}
       />
+      <TouchableOpacity
+        style={[
+          tw`w-full h-12 mt-5 rounded-2xl flex items-center justify-center`,
+          {
+            backgroundColor: Colors.primary,
+            opacity: isDisabled ? 0.5 : 1,
+          },
+        ]}
+        disabled={isDisabled}
+        onPress={handleVerification}
+      >
+        <Text style={[tw`font-medium text-xl`, { color: "white" }]}>
+       Verify
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 };
 
 export default Page;
-

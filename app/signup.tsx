@@ -6,38 +6,55 @@ import {
   Platform,
   KeyboardAvoidingView,
 } from "react-native";
-import {  CountryCode } from "libphonenumber-js";
 import tw from "twrnc";
-import { Link } from "expo-router";
-import PhoneInput from "@/components/PhoneInput";
+import { Link, useRouter } from "expo-router";
 import Colors from "@/constants/Colors";
-
-
-export type PhoneValues = {
-  phone: [string, CountryCode];
-};
-
+import { isClerkAPIResponseError, useSignUp } from "@clerk/clerk-expo";
+import Toast from "react-native-toast-message";
+import Or from "@/components/Or";
+import SocialAuth from "@/components/SocialAuth";
+import CustomTextInput from "@/components/TextInput";
+import { ClerkAPIError } from "@clerk/types";
 
 const Signup: React.FC = () => {
-  const [countryCode, setCountryCode] = useState<CountryCode>("NG");
-  const [formValues, setFormValues] = useState<PhoneValues>({phone: ["", "NG" as CountryCode]});
-  
-
-  const handleChangeCountry = (country: { cca2: CountryCode }) => {
-    setCountryCode(country.cca2);
-  };
-
-  const handleChangePhone = (phone: string) => {
-    const updatedFormValues: PhoneValues = {
-      phone: [phone, countryCode],
-    };
-    setFormValues(updatedFormValues);
-  };
-
+  const { isLoaded, signUp } = useSignUp();
+  const [emailAddress, setEmailAddress] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [errors, setErrors] = useState<ClerkAPIError[]>();
+  const router = useRouter();
+  // Function to handle submission of the sign-up input fields
   const handleSignUp = async () => {
-    console.log('sign up')
-  };
+    if (!isLoaded) return;
+    // Start the sign-up process using the email and password provided
+    try {
+      await signUp.create({
+        emailAddress,
+        password,
+      });
 
+      // Send the user an email with the verification code
+      await signUp.prepareEmailAddressVerification({
+        strategy: "email_code",
+      });
+      Toast.show({
+        type: "success",
+        text1: "Check your e-mail for the verification",
+      });
+      router.push({
+        pathname: "/verify/[phone]",
+        params: { email: emailAddress },
+      });
+    } catch (err: any) {
+      if (isClerkAPIResponseError(err)) setErrors(err.errors);
+      console.error(JSON.stringify(err, null, 2));
+      Toast.show({
+        type: "error",
+        text1: "An error occured. Kindly try again",
+      });
+    }
+  };
+  // Variable to check the disable state of the sign up button
+  const isDisabled: boolean = emailAddress === "" || password === "";
   return (
     <KeyboardAvoidingView
       style={tw`flex-1`}
@@ -49,16 +66,21 @@ const Signup: React.FC = () => {
           Let's get started!
         </Text>
         <Text style={[tw`mt-5 mb-10 text-base`, { color: Colors.gray }]}>
-          Enter your phone number. We will send you a confirmation code.
+          Enter your e-mail address. We will send you a confirmation code.
         </Text>
-
-        <PhoneInput
-          phone={formValues.phone[0]}
-          onChangePhone={handleChangePhone}
-          countryCode={countryCode}
-          onChangeCountry={handleChangeCountry}
+        <CustomTextInput
+          text={emailAddress}
+          onChangeText={setEmailAddress}
+          label="Email"
+          placeholder="E-mail address"
         />
-
+        <CustomTextInput
+          text={password}
+          onChangeText={setPassword}
+          label="Password"
+          placeholder="Password"
+          isPassword
+        />
         <Link href="/login" replace asChild>
           <TouchableOpacity>
             <Text style={[tw`text-base mt-5`, { color: Colors.primary }]}>
@@ -67,23 +89,25 @@ const Signup: React.FC = () => {
             </Text>
           </TouchableOpacity>
         </Link>
-        <View style={tw`flex-1 justify-end`}>
-          <TouchableOpacity
-            style={[
-              tw`w-full h-12 rounded-2xl flex items-center justify-center`,
-              {
-                backgroundColor: Colors.primary,
-                opacity: formValues.phone[0] === "" ? 0.5 : 1,
-              },
-            ]}
-            disabled={formValues.phone[0] === ""}
-            onPress={handleSignUp}
-          >
-            <Text style={[tw`font-medium text-xl`, { color: "white" }]}>
-              Sign up
-            </Text>
-          </TouchableOpacity>
-        </View>
+
+        <TouchableOpacity
+          style={[
+            tw`w-full h-12 mt-5 rounded-2xl flex items-center justify-center`,
+            {
+              backgroundColor: Colors.primary,
+              opacity: isDisabled ? 0.5 : 1,
+            },
+          ]}
+          disabled={isDisabled}
+          onPress={handleSignUp}
+        >
+          <Text style={[tw`font-medium text-xl`, { color: "white" }]}>
+            Sign up
+          </Text>
+        </TouchableOpacity>
+
+        <Or />
+        <SocialAuth />
       </View>
     </KeyboardAvoidingView>
   );

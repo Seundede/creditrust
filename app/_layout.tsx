@@ -9,6 +9,7 @@ import { TouchableOpacity } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import * as SecureStore from "expo-secure-store";
+import Toast from 'react-native-toast-message';
 
 
 export {
@@ -68,6 +69,7 @@ export default function RootLayout() {
     >
       <GestureHandlerRootView style={{ flex: 1 }}>
         <RootLayoutNav />
+        <Toast />
       </GestureHandlerRootView>
     </ClerkProvider>
   );

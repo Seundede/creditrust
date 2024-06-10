@@ -8,7 +8,7 @@ import {
 import React, { useState } from "react";
 import tw from "twrnc";
 import Colors from "@/constants/Colors";
-import { useRouter } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { isClerkAPIResponseError, useSignIn } from "@clerk/clerk-expo";
 import Toast from "react-native-toast-message";
 import Or from "@/components/Or";
@@ -22,7 +22,7 @@ const Login = () => {
   const [password, setPassword] = useState<string>("");
   const [errors, setErrors] = useState<ClerkAPIError[]>();
   const router = useRouter();
-  const isDisabled: boolean = email === "" || password === ""
+  const isDisabled: boolean = email === "" || password === "";
 
   // Handle the submission of the sign-in input fields
   const handleSignIn = async () => {
@@ -57,7 +57,7 @@ const Login = () => {
       behavior="padding"
       keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
     >
-      <View style={tw`flex-1 p-5 bg-white`}>
+      <View style={tw` p-5 bg-white`}>
         <Text style={[tw`text-2xl font-medium`, { color: Colors.secondary }]}>
           Welcome!
         </Text>
@@ -77,6 +77,11 @@ const Login = () => {
           placeholder="Password"
           isPassword
         />
+        <Link href="/" replace asChild>
+          <Text style={tw`underline `}>
+            Forgot password?
+          </Text>
+        </Link>
         <TouchableOpacity
           style={[
             tw`w-full h-12 rounded-2xl mt-10 flex items-center justify-center`,
@@ -86,7 +91,7 @@ const Login = () => {
             },
           ]}
           disabled={isDisabled}
-          onPress={ handleSignIn}
+          onPress={handleSignIn}
         >
           <Text style={[tw`font-medium text-base`, { color: "white" }]}>
             Login

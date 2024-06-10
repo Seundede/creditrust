@@ -1,10 +1,10 @@
-import { ClerkProvider, useAuth } from '@clerk/clerk-expo';
+import { ClerkProvider } from '@clerk/clerk-expo';
 import { Ionicons } from '@expo/vector-icons';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useFonts } from 'expo-font';
 import { Link, Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useState } from 'react';
+import {  useEffect } from 'react';
 import { TouchableOpacity } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
@@ -69,7 +69,7 @@ export default function RootLayout() {
     >
       <GestureHandlerRootView style={{ flex: 1 }}>
         <RootLayoutNav />
-        <Toast />
+        <Toast  />
       </GestureHandlerRootView>
     </ClerkProvider>
   );
@@ -77,11 +77,6 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
 const router = useRouter()
-const { isLoaded, isSignedIn} = useAuth()
-  useEffect(() => {
-   console.log(isSignedIn, "isSignedIn")
-  }, [isSignedIn]);
-
 
   return (
    
